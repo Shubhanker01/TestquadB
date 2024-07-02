@@ -3,14 +3,11 @@ const express = require('express')
 const mongoose = require('mongoose')
 const port = 3000
 const app = express()
+const hodlinfo = require('./model')
 
 async function getData() {
     let res = await fetch('https://api.wazirx.com/api/v2/tickers')
     let data = await res.json()
-    // var result = []
-    // for(var i in data){
-    //     result.push(i)
-    // }
     const jsonArr = Array.from(Object.values(data))
     var resArr = []
     for (var i = 0; i < 10; i++) {
@@ -18,10 +15,25 @@ async function getData() {
     }
     return resArr
 }
-app.get('/', (req, res) => {
-    let data = getData()
-    res.send(data)
-})
+
+
+async function saveData() {
+    let data = await getData()
+    for(var i=0;i<10;i++){
+        await hodlinfo.create({
+            "name":data[i].name,
+            "last_traded_price":data[i].last,
+            "buy":data[i].buy,
+            "sell":data[i].sell,
+            "vol":data[i].volume,
+            "base_unit":data[i].base_unit
+        })
+    }
+}
+saveData().then((res) => { console.log('success') })
+    .catch(err => console.log(err)
+    )
+
 async function main() {
     mongoose.connect('mongodb+srv://shubhanker40:bca02092001@cluster1.ivvgywy.mongodb.net/hodlinfo')
 }
